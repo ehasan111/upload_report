@@ -125,7 +125,7 @@ async function updateList() {
                             projectName: projectName,
                             name: displayName,
                             filePath: filePath,
-                            time: new Date().toLocaleString('en-GB', { timeZone: 'Asia/Dhaka' }),
+                            time: new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka', hour12: true, day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' }),
                             docs: projectDocs,
                             comment: comment || '-'
                         });

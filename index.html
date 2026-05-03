@@ -1,324 +1,361 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Report Dashboard</title>
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #21253a;
-      --border: #2e3248;
-      --accent: #6c63ff;
+      --accent:  #6c63ff;
       --accent2: #a78bfa;
-      --green: #22c55e;
-      --red: #ef4444;
-      --yellow: #f59e0b;
-      --text: #e2e8f0;
-      --muted: #8892a4;
-      --radius: 12px;
-      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --green:   #22c55e;
+      --red:     #ef4444;
+      --radius:  12px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    [data-theme="dark"] {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --surface2:  #21253a;
+      --border:    #2e3248;
+      --text:      #e2e8f0;
+      --muted:     #8892a4;
+      --shadow:    0 4px 24px rgba(0,0,0,.45);
+      --topbar-bg: rgba(15,17,23,.92);
+      --overlay-bg:rgba(0,0,0,.65);
+    }
+    [data-theme="light"] {
+      --bg:        #f1f5f9;
+      --surface:   #ffffff;
+      --surface2:  #f8fafc;
+      --border:    #e2e8f0;
+      --text:      #1e293b;
+      --muted:     #64748b;
+      --shadow:    0 4px 24px rgba(0,0,0,.1);
+      --topbar-bg: rgba(241,245,249,.95);
+      --overlay-bg:rgba(0,0,0,.4);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      min-height: 100vh;
+      background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh; transition: background .25s, color .25s;
     }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
-    /* ── SIDEBAR ── */
+    /* SIDEBAR OVERLAY */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; z-index: 150;
+      background: var(--overlay-bg); backdrop-filter: blur(2px);
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* SIDEBAR */
     .sidebar {
       position: fixed; top: 0; left: 0;
-      width: 220px; height: 100vh;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      padding: 0 0 16px 0;
-      z-index: 100;
+      width: 230px; height: 100vh;
+      background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 0 0 20px;
+      z-index: 160; overflow-y: auto;
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
     }
     .sidebar-logo {
-      padding: 22px 20px 18px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 10px;
+      padding: 22px 20px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }
     .sidebar-logo svg { flex-shrink: 0; }
     .sidebar-logo span {
       font-size: 1.05rem; font-weight: 700;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      background: linear-gradient(90deg,var(--accent),var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     .sidebar-section {
-      padding: 18px 14px 6px;
-      font-size: .7rem; font-weight: 600;
-      color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
+      padding: 18px 14px 6px; font-size: .68rem; font-weight: 700;
+      color: var(--muted); letter-spacing: .1em; text-transform: uppercase;
     }
     .sidebar-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 9px 20px; cursor: pointer;
-      border-radius: 8px; margin: 2px 8px;
-      color: var(--muted); font-size: .9rem;
-      transition: background .15s, color .15s;
-      position: relative;
+      padding: 9px 18px; cursor: pointer; border-radius: 8px; margin: 2px 8px;
+      color: var(--muted); font-size: .88rem;
+      transition: background .15s, color .15s; user-select: none;
     }
     .sidebar-item:hover { background: var(--surface2); color: var(--text); }
-    .sidebar-item.active { background: rgba(108,99,255,.18); color: var(--accent2); font-weight: 600; }
+    .sidebar-item.active { background: rgba(108,99,255,.16); color: var(--accent2); font-weight: 600; }
     .sidebar-item .badge {
-      margin-left: auto; background: var(--accent);
-      color: #fff; font-size: .65rem; font-weight: 700;
-      border-radius: 999px; padding: 1px 7px; min-width: 20px; text-align: center;
+      margin-left: auto; background: var(--accent); color: #fff;
+      font-size: .62rem; font-weight: 700; border-radius: 999px;
+      padding: 2px 7px; min-width: 20px; text-align: center;
     }
-    .sidebar-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+    .sidebar-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-    /* ── MAIN ── */
-    .main { margin-left: 220px; min-height: 100vh; }
+    /* MAIN */
+    .main { margin-left: 230px; min-height: 100vh; }
 
-    /* ── TOPBAR ── */
+    /* TOPBAR */
     .topbar {
       position: sticky; top: 0; z-index: 90;
-      background: rgba(15,17,23,.92); backdrop-filter: blur(12px);
+      background: var(--topbar-bg); backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
-      padding: 14px 28px;
-      display: flex; align-items: center; gap: 14px;
+      padding: 12px 24px; display: flex; align-items: center; gap: 12px;
     }
-    .topbar h1 { font-size: 1.15rem; font-weight: 700; flex: 1; }
-    .search-wrap {
-      position: relative; flex: 1; max-width: 340px;
+    .hamburger {
+      display: none; width: 36px; height: 36px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      align-items: center; justify-content: center;
+      cursor: pointer; color: var(--muted); flex-shrink: 0;
+      transition: color .15s, border-color .15s;
     }
+    .hamburger:hover { color: var(--text); border-color: var(--accent2); }
+    .hamburger svg { width: 18px; height: 18px; }
+    .topbar-title {
+      font-size: 1.1rem; font-weight: 700; flex: 1;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .search-wrap { position: relative; flex: 1; max-width: 320px; }
     .search-wrap svg {
-      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-      color: var(--muted); width: 16px; height: 16px;
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); width: 15px; height: 15px; pointer-events: none;
     }
     .search-wrap input {
-      width: 100%; padding: 8px 14px 8px 34px;
+      width: 100%; padding: 8px 12px 8px 32px;
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-size: .88rem;
+      border-radius: 8px; color: var(--text); font-size: .86rem;
       outline: none; transition: border .15s;
     }
     .search-wrap input:focus { border-color: var(--accent); }
     .search-wrap input::placeholder { color: var(--muted); }
+    .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .stat-pill {
-      display: flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; gap: 5px;
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 999px; padding: 6px 14px; font-size: .82rem;
+      border-radius: 999px; padding: 5px 12px; font-size: .8rem; white-space: nowrap;
     }
     .stat-pill b { color: var(--accent2); }
 
-    /* ── CONTENT ── */
-    .content { padding: 28px; }
-
-    /* ── CATEGORY FILTER TABS ── */
-    .filter-tabs {
-      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
+    /* THEME TOGGLE */
+    .theme-toggle {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--muted); flex-shrink: 0;
+      transition: color .15s, border-color .15s, background .25s;
     }
+    .theme-toggle:hover { color: var(--text); border-color: var(--accent2); }
+    .theme-toggle svg { width: 17px; height: 17px; }
+    .icon-sun, .icon-moon { display: none; }
+    [data-theme="dark"]  .icon-moon { display: block; }
+    [data-theme="light"] .icon-sun  { display: block; }
+
+    /* CONTENT */
+    .content { padding: 24px; }
+
+    /* FILTER TABS */
+    .filter-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 22px; }
     .filter-tab {
-      padding: 6px 16px; border-radius: 999px; cursor: pointer;
-      font-size: .83rem; font-weight: 600;
-      border: 1.5px solid var(--border);
+      padding: 5px 15px; border-radius: 999px; cursor: pointer;
+      font-size: .81rem; font-weight: 600; border: 1.5px solid var(--border);
       background: var(--surface); color: var(--muted);
-      transition: all .15s;
+      transition: all .15s; white-space: nowrap; user-select: none;
     }
     .filter-tab:hover { border-color: var(--accent2); color: var(--text); }
-    .filter-tab.active {
-      background: var(--accent); border-color: var(--accent);
-      color: #fff;
-    }
+    .filter-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    /* ── PROJECT GROUP ── */
-    .project-group { margin-bottom: 32px; }
-    .project-heading {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 12px;
-    }
-    .project-heading h2 {
-      font-size: 1rem; font-weight: 700; color: var(--text);
-    }
+    /* PROJECT GROUP */
+    .project-group { margin-bottom: 30px; }
+    .project-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .project-heading h2 { font-size: .98rem; font-weight: 700; }
     .project-heading .count {
-      font-size: .75rem; background: var(--surface2);
-      border: 1px solid var(--border); border-radius: 999px;
-      padding: 1px 10px; color: var(--muted);
+      font-size: .73rem; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; color: var(--muted);
     }
     .project-divider {
-      height: 1.5px;
-      background: linear-gradient(90deg, var(--border), transparent);
-      margin-bottom: 12px;
+      height: 1.5px; background: linear-gradient(90deg,var(--border),transparent); margin-bottom: 10px;
     }
 
-    /* ── TABLE ── */
+    /* TABLE */
     .table-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: visible;
     }
-    table { width: 100%; border-collapse: collapse; }
-    thead tr {
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
-    }
+    .table-wrap table { width: 100%; border-collapse: collapse; }
+    .table-wrap thead tr:first-child th:first-child { border-radius: var(--radius) 0 0 0; }
+    .table-wrap thead tr:first-child th:last-child  { border-radius: 0 var(--radius) 0 0; }
+    .table-wrap tbody tr:last-child td:first-child  { border-radius: 0 0 0 var(--radius); }
+    .table-wrap tbody tr:last-child td:last-child   { border-radius: 0 0 var(--radius) 0; }
+    thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
     th {
-      padding: 11px 16px; text-align: left;
-      font-size: .75rem; font-weight: 700;
-      color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+      padding: 10px 16px; text-align: left; font-size: .72rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .07em;
     }
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background .12s;
-    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: rgba(108,99,255,.06); }
-    td { padding: 13px 16px; font-size: .88rem; vertical-align: middle; }
+    tbody tr:hover { background: rgba(108,99,255,.05); }
+    td { padding: 12px 16px; font-size: .87rem; vertical-align: middle; }
 
-    /* ── REPORT NAME CELL ── */
+    /* REPORT NAME CELL */
     .report-name { display: flex; align-items: center; gap: 10px; }
     .cat-icon {
-      width: 32px; height: 32px; border-radius: 8px;
+      width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: .7rem; font-weight: 800; flex-shrink: 0;
-      letter-spacing: -.5px;
+      font-size: .65rem; font-weight: 800; letter-spacing: -.3px;
     }
-    .cat-web    { background: rgba(99,179,237,.15); color: #63b3ed; }
-    .cat-api    { background: rgba(104,211,145,.15); color: #68d391; }
-    .cat-mobile { background: rgba(246,173,85,.15); color: #f6ad55; }
-    .cat-security { background: rgba(239,68,68,.15); color: #f87171; }
+    .cat-web         { background: rgba(99,179,237,.15);  color: #63b3ed; }
+    .cat-api         { background: rgba(104,211,145,.15); color: #68d391; }
+    .cat-mobile      { background: rgba(246,173,85,.15);  color: #f6ad55; }
+    .cat-security    { background: rgba(239,68,68,.15);   color: #f87171; }
     .cat-performance { background: rgba(167,139,250,.15); color: #a78bfa; }
-    .cat-ui-ux  { background: rgba(237,137,54,.15); color: #ed8936; }
-    .cat-misc   { background: rgba(160,174,192,.15); color: #a0aec0; }
+    .cat-ui-ux       { background: rgba(237,137,54,.15);  color: #ed8936; }
+    .cat-misc        { background: rgba(160,174,192,.15); color: #a0aec0; }
+    .report-info .r-name { font-weight: 600; }
+    .report-info .r-sub  { font-size: .74rem; color: var(--muted); margin-top: 2px; }
 
-    .report-info .name { font-weight: 600; color: var(--text); }
-    .report-info .sub  { font-size: .75rem; color: var(--muted); margin-top: 2px; }
-
-    /* ── CATEGORY BADGE ── */
+    /* CATEGORY BADGE */
     .cat-badge {
-      display: inline-flex; align-items: center;
-      padding: 3px 10px; border-radius: 999px;
-      font-size: .73rem; font-weight: 700;
+      display: inline-flex; align-items: center; padding: 3px 10px;
+      border-radius: 999px; font-size: .72rem; font-weight: 700;
     }
+    .datetime { color: var(--muted); font-size: .8rem; }
 
-    /* ── DATETIME ── */
-    .datetime { color: var(--muted); font-size: .82rem; }
-
-    /* ── ACTIONS ── */
-    .actions { display: flex; align-items: center; gap: 8px; }
+    /* ACTIONS */
+    .actions { display: flex; align-items: center; gap: 7px; }
     .btn {
       display: inline-flex; align-items: center; gap: 5px;
-      padding: 6px 13px; border-radius: 7px;
-      font-size: .8rem; font-weight: 600; cursor: pointer;
-      border: none; transition: all .15s; text-decoration: none;
+      padding: 6px 12px; border-radius: 7px; font-size: .79rem;
+      font-weight: 600; cursor: pointer; border: none;
+      transition: all .15s; text-decoration: none; white-space: nowrap;
     }
-    .btn svg { width: 14px; height: 14px; }
-    .btn-view {
-      background: rgba(108,99,255,.18); color: var(--accent2);
-      border: 1px solid rgba(108,99,255,.3);
-    }
-    .btn-view:hover { background: rgba(108,99,255,.35); }
-    .btn-copy {
-      background: var(--surface2); color: var(--muted);
-      border: 1px solid var(--border);
-    }
+    .btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .btn-view { background: rgba(108,99,255,.15); color: var(--accent2); border: 1px solid rgba(108,99,255,.28); }
+    .btn-view:hover { background: rgba(108,99,255,.3); }
+    .btn-copy { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
     .btn-copy:hover { color: var(--text); border-color: var(--accent2); }
     .btn-copy.copied { color: var(--green); border-color: var(--green); }
 
-    /* ── 3DOT MENU ── */
+    /* 3-DOT BUTTON */
     .dot-wrap { position: relative; }
     .dot-btn {
-      width: 30px; height: 30px; border-radius: 7px;
+      width: 32px; height: 32px; border-radius: 7px;
       background: var(--surface2); border: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; color: var(--muted); transition: all .15s;
     }
     .dot-btn:hover { color: var(--text); border-color: var(--accent2); }
     .dot-btn svg { width: 15px; height: 15px; }
+
+    /* DROPDOWN PORTAL — position:fixed so it escapes table overflow clipping */
     .dropdown {
-      position: absolute; right: 0; top: 36px;
+      position: fixed; z-index: 9000;
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; min-width: 160px;
-      box-shadow: var(--shadow); z-index: 200;
-      overflow: hidden; display: none;
+      border-radius: 10px; min-width: 155px;
+      box-shadow: var(--shadow); overflow: hidden; display: none;
     }
-    .dropdown.open { display: block; animation: fadeIn .12s ease; }
-    @keyframes fadeIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
+    .dropdown.open { display: block; animation: popIn .12s ease; }
+    @keyframes popIn {
+      from { opacity:0; transform:scale(.95) translateY(-4px); }
+      to   { opacity:1; transform:scale(1)   translateY(0); }
+    }
     .dropdown-item {
-      display: flex; align-items: center; gap: 9px;
-      padding: 10px 16px; cursor: pointer;
-      font-size: .85rem; color: var(--muted);
+      display: flex; align-items: center; gap: 9px; padding: 10px 15px;
+      cursor: pointer; font-size: .84rem; color: var(--muted);
       transition: background .12s, color .12s;
     }
-    .dropdown-item:hover { background: rgba(108,99,255,.12); color: var(--text); }
+    .dropdown-item:hover { background: rgba(108,99,255,.1); color: var(--text); }
     .dropdown-item.danger { color: var(--red); }
-    .dropdown-item.danger:hover { background: rgba(239,68,68,.1); }
-    .dropdown-item svg { width: 14px; height: 14px; }
+    .dropdown-item.danger:hover { background: rgba(239,68,68,.08); }
+    .dropdown-item svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-    /* ── EMPTY STATE ── */
-    .empty {
-      text-align: center; padding: 60px 20px; color: var(--muted);
-    }
-    .empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: .4; }
-    .empty p { font-size: .95rem; }
+    /* EMPTY */
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: .35; }
+    .empty p { font-size: .93rem; }
 
-    /* ── TOAST ── */
+    /* TOAST */
     .toast {
-      position: fixed; bottom: 24px; right: 24px;
+      position: fixed; bottom: 22px; right: 22px;
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 18px;
-      display: flex; align-items: center; gap: 10px;
-      box-shadow: var(--shadow); z-index: 9999;
-      font-size: .88rem; color: var(--text);
-      transform: translateY(80px); opacity: 0;
-      transition: all .25s ease;
+      border-radius: 10px; padding: 11px 17px;
+      display: flex; align-items: center; gap: 9px;
+      box-shadow: var(--shadow); z-index: 9999; font-size: .87rem;
+      transform: translateY(80px); opacity: 0; transition: all .25s ease; pointer-events: none;
     }
     .toast.show { transform: translateY(0); opacity: 1; }
-    .toast-icon { color: var(--green); }
+    .toast-icon { color: var(--green); flex-shrink: 0; }
 
-    /* ── MODAL ── */
+    /* MODAL */
     .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,.65);
-      backdrop-filter: blur(4px); z-index: 500;
-      display: none; align-items: center; justify-content: center;
+      position: fixed; inset: 0; background: var(--overlay-bg);
+      backdrop-filter: blur(4px); z-index: 8000;
+      display: none; align-items: center; justify-content: center; padding: 16px;
     }
     .modal-backdrop.open { display: flex; }
     .modal {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 28px;
-      width: 100%; max-width: 440px; box-shadow: var(--shadow);
-      animation: fadeIn .15s ease;
+      border-radius: var(--radius); padding: 26px;
+      width: 100%; max-width: 440px; box-shadow: var(--shadow); animation: popIn .15s ease;
     }
-    .modal h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
-    .modal label { font-size: .82rem; color: var(--muted); display: block; margin-bottom: 5px; }
+    .modal h3 { font-size: 1.02rem; font-weight: 700; margin-bottom: 18px; }
+    .modal label { font-size: .81rem; color: var(--muted); display: block; margin-bottom: 4px; }
     .modal input, .modal textarea {
-      width: 100%; background: var(--surface2);
-      border: 1px solid var(--border); border-radius: 8px;
-      padding: 9px 13px; color: var(--text); font-size: .88rem;
-      outline: none; margin-bottom: 14px; transition: border .15s;
-      font-family: inherit;
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: .87rem;
+      outline: none; margin-bottom: 13px; transition: border .15s; font-family: inherit;
     }
     .modal input:focus, .modal textarea:focus { border-color: var(--accent); }
-    .modal textarea { resize: vertical; min-height: 70px; }
-    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+    .modal textarea { resize: vertical; min-height: 68px; }
+    .modal-footer { display: flex; gap: 9px; justify-content: flex-end; margin-top: 4px; }
     .btn-cancel {
-      background: var(--surface2); color: var(--muted);
-      border: 1px solid var(--border); padding: 8px 18px;
-      border-radius: 8px; font-size: .88rem; cursor: pointer;
+      background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+      padding: 8px 17px; border-radius: 8px; font-size: .87rem; cursor: pointer;
+      transition: color .15s, border-color .15s;
     }
+    .btn-cancel:hover { color: var(--text); border-color: var(--accent2); }
     .btn-save {
-      background: var(--accent); color: #fff;
-      border: none; padding: 8px 20px;
-      border-radius: 8px; font-size: .88rem; font-weight: 600; cursor: pointer;
+      background: var(--accent); color: #fff; border: none;
+      padding: 8px 20px; border-radius: 8px; font-size: .87rem; font-weight: 600;
+      cursor: pointer; transition: opacity .15s;
     }
-    .btn-save:hover { background: var(--accent2); }
+    .btn-save:hover { opacity: .85; }
 
-    /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    /* ── MOBILE RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.mobile-open { transform: translateX(0); }
+      .hamburger { display: flex; }
+      .main { margin-left: 0; }
+      .topbar { flex-wrap: wrap; padding: 10px 14px; gap: 8px; }
+      .topbar-title { font-size: 1rem; order: 1; }
+      .hamburger { order: 0; }
+      .topbar-right { order: 2; margin-left: auto; }
+      .search-wrap { order: 3; flex: 1 1 100%; max-width: 100%; }
+      .content { padding: 14px; }
+      .filter-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+      .filter-tabs::-webkit-scrollbar { display: none; }
+      /* Card layout for table rows */
+      .table-wrap { overflow: hidden; }
+      .table-wrap table, .table-wrap thead, .table-wrap tbody,
+      .table-wrap th, .table-wrap td, .table-wrap tr { display: block; }
+      .table-wrap thead { display: none; }
+      .table-wrap tbody tr {
+        padding: 14px; border-bottom: 1px solid var(--border);
+        display: grid; grid-template-columns: 1fr; gap: 8px;
+      }
+      .table-wrap tbody tr:last-child { border-bottom: none; }
+      .table-wrap td { padding: 0; border: none; }
+      .actions { flex-wrap: wrap; gap: 6px; }
+      .btn { flex: 1; justify-content: center; min-width: 80px; }
+      .dot-wrap { flex: 0; }
+    }
+    @media (max-width: 420px) {
+      .stat-pill { display: none; }
+    }
   </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
       <rect width="28" height="28" rx="8" fill="url(#lg)"/>
@@ -329,14 +366,11 @@
     </svg>
     <span>ReportHub</span>
   </div>
-
   <div class="sidebar-section">Navigation</div>
   <div class="sidebar-item active" onclick="filterCat('all')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    All Reports
-    <span class="badge" id="badge-all">0</span>
+    All Reports <span class="badge" id="badge-all">0</span>
   </div>
-
   <div class="sidebar-section">Categories</div>
   <div class="sidebar-item" onclick="filterCat('web')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -347,7 +381,7 @@
     API <span class="badge" id="badge-api">0</span>
   </div>
   <div class="sidebar-item" onclick="filterCat('mobile')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
     Mobile <span class="badge" id="badge-mobile">0</span>
   </div>
   <div class="sidebar-item" onclick="filterCat('security')">
@@ -359,7 +393,7 @@
     Performance <span class="badge" id="badge-performance">0</span>
   </div>
   <div class="sidebar-item" onclick="filterCat('ui-ux')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
     UI/UX <span class="badge" id="badge-ui-ux">0</span>
   </div>
   <div class="sidebar-item" onclick="filterCat('misc')">
@@ -368,19 +402,26 @@
   </div>
 </aside>
 
-<!-- MAIN -->
 <main class="main">
   <div class="topbar">
-    <h1 id="page-title">All Reports</h1>
+    <div class="hamburger" onclick="openSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </div>
+    <span class="topbar-title" id="page-title">All Reports</span>
     <div class="search-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" id="search-input" placeholder="Search reports..." oninput="renderAll()">
     </div>
-    <div class="stat-pill">Total: <b id="total-count">0</b></div>
+    <div class="topbar-right">
+      <div class="stat-pill">Total: <b id="total-count">0</b></div>
+      <div class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </div>
+    </div>
   </div>
-
   <div class="content">
-    <div class="filter-tabs" id="filter-tabs">
+    <div class="filter-tabs">
       <div class="filter-tab active" onclick="filterCat('all')">All</div>
       <div class="filter-tab" onclick="filterCat('web')">Web</div>
       <div class="filter-tab" onclick="filterCat('api')">API</div>
@@ -390,287 +431,293 @@
       <div class="filter-tab" onclick="filterCat('ui-ux')">UI/UX</div>
       <div class="filter-tab" onclick="filterCat('misc')">Misc</div>
     </div>
-
     <div id="reports-container"></div>
   </div>
 </main>
 
+<!-- GLOBAL DROPDOWN PORTAL (position:fixed, placed by JS) -->
+<div class="dropdown" id="global-dropdown">
+  <div class="dropdown-item" id="drop-edit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Edit
+  </div>
+  <div class="dropdown-item danger" id="drop-remove">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+    Remove
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast">
   <svg class="toast-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-  <span id="toast-msg">Link copied!</span>
+  <span id="toast-msg">Done!</span>
 </div>
 
 <!-- EDIT MODAL -->
 <div class="modal-backdrop" id="edit-modal">
   <div class="modal">
     <h3>Edit Report</h3>
-    <label>Report Name</label>
-    <input type="text" id="edit-name" placeholder="Report name"/>
-    <label>Project</label>
-    <input type="text" id="edit-project" placeholder="Project name"/>
-    <label>Comment</label>
-    <textarea id="edit-comment" placeholder="Comment"></textarea>
-    <label>Docs URL</label>
-    <input type="text" id="edit-docs" placeholder="https://..."/>
+    <label>Report Name</label><input type="text" id="edit-name" placeholder="Report name"/>
+    <label>Project</label><input type="text" id="edit-project" placeholder="Project name"/>
+    <label>Comment</label><textarea id="edit-comment" placeholder="Comment..."></textarea>
+    <label>Docs URL</label><input type="text" id="edit-docs" placeholder="https://..."/>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" onclick="saveEdit()">Save Changes</button>
+      <button class="btn-save"   onclick="saveEdit()">Save Changes</button>
     </div>
   </div>
 </div>
 
 <script>
-let allData = [];
-let currentCat = 'all';
-let editIndex = null;
+var allData    = [];
+var currentCat = 'all';
+var editIndex  = null;
+var dropIdx    = null;
+var lastDotBtn = null;
 
-const catColors = {
-  web: 'cat-web', api: 'cat-api', mobile: 'cat-mobile',
-  security: 'cat-security', performance: 'cat-performance',
-  'ui-ux': 'cat-ui-ux', misc: 'cat-misc'
-};
-const catLabels = {
-  web: 'WEB', api: 'API', mobile: 'MOB',
-  security: 'SEC', performance: 'PERF',
-  'ui-ux': 'UI', misc: 'MISC'
-};
-const catBadgeColors = {
-  web:    '#63b3ed', api:  '#68d391', mobile: '#f6ad55',
-  security: '#f87171', performance: '#a78bfa',
-  'ui-ux': '#ed8936', misc: '#a0aec0'
-};
-
-async function loadData() {
-  try {
-    const res = await fetch('data.json?_=' + Date.now());
-    if (!res.ok) throw new Error();
-    allData = await res.json();
-  } catch {
-    allData = [];
-  }
-  updateBadges();
-  renderAll();
+/* THEME */
+(function() {
+  var saved = localStorage.getItem('rh-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+function toggleTheme() {
+  var cur  = document.documentElement.getAttribute('data-theme');
+  var next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('rh-theme', next);
 }
 
+/* MOBILE SIDEBAR */
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('mobile-open');
+  document.getElementById('sidebar-overlay').classList.add('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+/* 12-HOUR TIME FORMAT */
+function to12h(timeStr) {
+  if (!timeStr || timeStr === '-') return '-';
+  if (/am|pm/i.test(timeStr)) return timeStr;
+  try {
+    var d = new Date(timeStr);
+    if (isNaN(d.getTime())) {
+      var parts = timeStr.split(', ');
+      if (parts.length >= 2) {
+        var dp = parts[0].split('/');
+        if (dp.length === 3) {
+          d = new Date(dp[2] + '-' + dp[1] + '-' + dp[0] + 'T' + parts[1]);
+        }
+      }
+    }
+    if (!isNaN(d.getTime())) {
+      var date = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      var time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12: true });
+      return date + ', ' + time;
+    }
+  } catch(e) {}
+  return timeStr;
+}
+
+/* DATA */
+function loadData() {
+  fetch('data.json?_=' + Date.now())
+    .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+    .then(function(d) { allData = d; updateBadges(); renderAll(); })
+    .catch(function()  { allData = []; updateBadges(); renderAll(); });
+}
 function updateBadges() {
-  const counts = {};
-  allData.forEach(r => {
-    counts[r.category] = (counts[r.category] || 0) + 1;
-  });
+  var counts = {};
+  allData.forEach(function(r) { counts[r.category] = (counts[r.category]||0) + 1; });
   document.getElementById('badge-all').textContent = allData.length;
-  ['web','api','mobile','security','performance','ui-ux','misc'].forEach(c => {
-    const el = document.getElementById('badge-' + c);
+  ['web','api','mobile','security','performance','ui-ux','misc'].forEach(function(c) {
+    var el = document.getElementById('badge-' + c);
     if (el) el.textContent = counts[c] || 0;
   });
 }
 
+/* FILTER */
 function filterCat(cat) {
   currentCat = cat;
-  // sidebar items
-  document.querySelectorAll('.sidebar-item').forEach(el => {
-    el.classList.toggle('active', el.getAttribute('onclick') === `filterCat('${cat}')`);
+  document.querySelectorAll('.sidebar-item').forEach(function(el) {
+    el.classList.toggle('active', el.getAttribute('onclick') === "filterCat('" + cat + "')");
   });
-  // filter tabs
-  document.querySelectorAll('.filter-tab').forEach(el => {
-    el.classList.toggle('active', el.getAttribute('onclick') === `filterCat('${cat}')`);
+  document.querySelectorAll('.filter-tab').forEach(function(el) {
+    el.classList.toggle('active', el.getAttribute('onclick') === "filterCat('" + cat + "')");
   });
-  const titles = { all:'All Reports', web:'Web Reports', api:'API Reports',
-    mobile:'Mobile Reports', security:'Security Reports',
-    performance:'Performance Reports', 'ui-ux':'UI/UX Reports', misc:'Misc Reports' };
+  var titles = { all:'All Reports', web:'Web Reports', api:'API Reports', mobile:'Mobile Reports',
+    security:'Security Reports', performance:'Performance Reports', 'ui-ux':'UI/UX Reports', misc:'Misc Reports' };
   document.getElementById('page-title').textContent = titles[cat] || 'Reports';
+  closeSidebar();
   renderAll();
 }
 
+/* RENDER */
+var catColors = { web:'cat-web', api:'cat-api', mobile:'cat-mobile', security:'cat-security', performance:'cat-performance', 'ui-ux':'cat-ui-ux', misc:'cat-misc' };
+var catLabels = { web:'WEB', api:'API', mobile:'MOB', security:'SEC', performance:'PERF', 'ui-ux':'UI', misc:'MISC' };
+var catBC     = { web:'#63b3ed', api:'#68d391', mobile:'#f6ad55', security:'#f87171', performance:'#a78bfa', 'ui-ux':'#ed8936', misc:'#a0aec0' };
+
 function renderAll() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const filtered = allData.filter(r => {
-    const matchCat = currentCat === 'all' || r.category === currentCat;
-    const matchQ = !q || r.name.toLowerCase().includes(q)
-      || r.projectName.toLowerCase().includes(q)
-      || (r.comment || '').toLowerCase().includes(q);
-    return matchCat && matchQ;
+  var q = document.getElementById('search-input').value.toLowerCase();
+  var filtered = allData.filter(function(r) {
+    var mc = currentCat === 'all' || r.category === currentCat;
+    var mq = !q || r.name.toLowerCase().includes(q)
+                || (r.projectName||'').toLowerCase().includes(q)
+                || (r.comment||'').toLowerCase().includes(q);
+    return mc && mq;
   });
-
   document.getElementById('total-count').textContent = filtered.length;
-
-  const container = document.getElementById('reports-container');
-  if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      <p>No reports found</p>
-    </div>`;
+  var container = document.getElementById('reports-container');
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg><p>No reports found</p></div>';
     return;
   }
-
-  // Group by project
-  const groups = {};
-  filtered.forEach((r, i) => {
-    const proj = r.projectName || 'Unassigned';
+  var groups = {};
+  filtered.forEach(function(r) {
+    var proj = r.projectName || 'Unassigned';
     if (!groups[proj]) groups[proj] = [];
-    groups[proj].push({ ...r, _idx: allData.indexOf(r) });
+    var entry = {}; Object.assign(entry, r); entry._idx = allData.indexOf(r);
+    groups[proj].push(entry);
   });
-
-  let html = '';
-  for (const [proj, reports] of Object.entries(groups)) {
-    html += `
-    <div class="project-group">
-      <div class="project-heading">
-        <h2>${escHtml(proj)}</h2>
-        <span class="count">${reports.length} report${reports.length !== 1 ? 's' : ''}</span>
-      </div>
-      <div class="project-divider"></div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Report</th>
-              <th>Category</th>
-              <th>Date & Time</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${reports.map(r => renderRow(r)).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-  }
+  var html = '';
+  Object.keys(groups).forEach(function(proj) {
+    var reports = groups[proj];
+    html += '<div class="project-group">'
+      + '<div class="project-heading"><h2>' + esc(proj) + '</h2>'
+      + '<span class="count">' + reports.length + ' report' + (reports.length !== 1 ? 's' : '') + '</span></div>'
+      + '<div class="project-divider"></div>'
+      + '<div class="table-wrap"><table>'
+      + '<thead><tr><th>Report</th><th>Category</th><th>Date &amp; Time</th><th>Actions</th></tr></thead>'
+      + '<tbody>' + reports.map(renderRow).join('') + '</tbody>'
+      + '</table></div></div>';
+  });
   container.innerHTML = html;
 }
 
 function renderRow(r) {
-  const clr = catColors[r.category] || 'cat-misc';
-  const lbl = catLabels[r.category] || r.category.toUpperCase().slice(0,4);
-  const bc  = catBadgeColors[r.category] || '#a0aec0';
-  const comment = r.comment && r.comment !== '-' ? r.comment : '';
-  return `
-  <tr>
-    <td>
-      <div class="report-name">
-        <div class="cat-icon ${clr}">${lbl}</div>
-        <div class="report-info">
-          <div class="name">${escHtml(r.name)}</div>
-          ${comment ? `<div class="sub">${escHtml(comment)}</div>` : ''}
-        </div>
-      </div>
-    </td>
-    <td>
-      <span class="cat-badge" style="background:${bc}22;color:${bc};">${escHtml(r.category)}</span>
-    </td>
-    <td>
-      <div class="datetime">${escHtml(r.time || '-')}</div>
-    </td>
-    <td>
-      <div class="actions">
-        <a class="btn btn-view" href="reports/${escHtml(r.filePath)}" target="_blank">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          View
-        </a>
-        <button class="btn btn-copy" onclick="copyLink(this, 'reports/${escHtml(r.filePath)}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy
-        </button>
-        <div class="dot-wrap">
-          <div class="dot-btn" onclick="toggleDrop(this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-          </div>
-          <div class="dropdown">
-            <div class="dropdown-item" onclick="openEdit(${r._idx})">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit
-            </div>
-            <div class="dropdown-item danger" onclick="removeReport(${r._idx})">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-              Remove
-            </div>
-          </div>
-        </div>
-      </div>
-    </td>
-  </tr>`;
+  var clr = catColors[r.category] || 'cat-misc';
+  var lbl = catLabels[r.category] || r.category.toUpperCase().slice(0,4);
+  var bc  = catBC[r.category]     || '#a0aec0';
+  var cmt = r.comment && r.comment !== '-' ? r.comment : '';
+  var t   = to12h(r.time || '-');
+  return '<tr>'
+    + '<td><div class="report-name"><div class="cat-icon ' + clr + '">' + lbl + '</div>'
+    + '<div class="report-info"><div class="r-name">' + esc(r.name) + '</div>'
+    + (cmt ? '<div class="r-sub">' + esc(cmt) + '</div>' : '')
+    + '</div></div></td>'
+    + '<td><span class="cat-badge" style="background:' + bc + '22;color:' + bc + ';">' + esc(r.category) + '</span></td>'
+    + '<td><div class="datetime">' + esc(t) + '</div></td>'
+    + '<td><div class="actions">'
+    + '<a class="btn btn-view" href="reports/' + esc(r.filePath) + '" target="_blank">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</a>'
+    + '<button class="btn btn-copy" onclick="copyLink(this,\'reports/' + esc(r.filePath) + '\')">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>'
+    + '<div class="dot-wrap"><div class="dot-btn" onclick="openDrop(event,' + r._idx + ')">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>'
+    + '</div></div></div></td></tr>';
 }
 
-function escHtml(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── COPY LINK ──
+/* COPY */
 function copyLink(btn, path) {
-  const url = location.origin + '/' + path;
-  navigator.clipboard.writeText(url).then(() => {
+  var url = location.href.replace(/[^\/]*$/, '') + path;
+  navigator.clipboard.writeText(url).then(function() {
     btn.classList.add('copied');
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied`;
-    showToast('Link copied to clipboard!');
-    setTimeout(() => {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied';
+    showToast('Link copied!');
+    setTimeout(function() {
       btn.classList.remove('copied');
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
     }, 2000);
   });
 }
 
-// ── 3-DOT DROPDOWN ──
-function toggleDrop(btn) {
-  const drop = btn.nextElementSibling;
-  const isOpen = drop.classList.contains('open');
-  document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
-  if (!isOpen) drop.classList.add('open');
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('.dot-wrap')) {
-    document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
-  }
-});
+/* DROPDOWN PORTAL */
+var globalDrop = document.getElementById('global-dropdown');
 
-// ── EDIT ──
+function openDrop(e, idx) {
+  e.stopPropagation();
+  var btn  = e.currentTarget;
+  var rect = btn.getBoundingClientRect();
+  var dropW = 160, dropH = 90;
+  var left = rect.right - dropW;
+  if (left < 8) left = rect.left;
+  var top = rect.bottom + 6;
+  if (top + dropH > window.innerHeight - 8) top = rect.top - dropH - 6;
+
+  if (globalDrop.classList.contains('open') && lastDotBtn === btn) {
+    closeDropdown(); return;
+  }
+  dropIdx    = idx;
+  lastDotBtn = btn;
+  globalDrop.style.top  = top  + 'px';
+  globalDrop.style.left = left + 'px';
+  globalDrop.classList.add('open');
+}
+function closeDropdown() {
+  globalDrop.classList.remove('open');
+  lastDotBtn = null;
+}
+document.getElementById('drop-edit').addEventListener('click', function() {
+  var i = dropIdx; closeDropdown(); openEdit(i);
+});
+document.getElementById('drop-remove').addEventListener('click', function() {
+  var i = dropIdx; closeDropdown(); removeReport(i);
+});
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.dot-btn') && !e.target.closest('#global-dropdown')) closeDropdown();
+});
+document.addEventListener('scroll', closeDropdown, true);
+window.addEventListener('resize', closeDropdown);
+
+/* EDIT MODAL */
 function openEdit(idx) {
   editIndex = idx;
-  const r = allData[idx];
+  var r = allData[idx];
   document.getElementById('edit-name').value    = r.name || '';
   document.getElementById('edit-project').value = r.projectName || '';
-  document.getElementById('edit-comment').value = r.comment !== '-' ? (r.comment || '') : '';
-  document.getElementById('edit-docs').value    = r.docs !== '-' ? (r.docs || '') : '';
+  document.getElementById('edit-comment').value = r.comment !== '-' ? (r.comment||'') : '';
+  document.getElementById('edit-docs').value    = r.docs    !== '-' ? (r.docs   ||'') : '';
   document.getElementById('edit-modal').classList.add('open');
-  document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
 }
-
 function closeModal() {
   document.getElementById('edit-modal').classList.remove('open');
   editIndex = null;
 }
-
 function saveEdit() {
   if (editIndex === null) return;
-  allData[editIndex].name        = document.getElementById('edit-name').value.trim() || allData[editIndex].name;
+  allData[editIndex].name        = document.getElementById('edit-name').value.trim()    || allData[editIndex].name;
   allData[editIndex].projectName = document.getElementById('edit-project').value.trim() || allData[editIndex].projectName;
   allData[editIndex].comment     = document.getElementById('edit-comment').value.trim() || '-';
-  allData[editIndex].docs        = document.getElementById('edit-docs').value.trim() || '-';
-  closeModal();
-  updateBadges();
-  renderAll();
-  showToast('Report updated successfully!');
+  allData[editIndex].docs        = document.getElementById('edit-docs').value.trim()    || '-';
+  closeModal(); updateBadges(); renderAll(); showToast('Report updated!');
 }
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
 
-// ── REMOVE ──
+/* REMOVE */
 function removeReport(idx) {
   if (!confirm('Remove this report from the dashboard?')) return;
   allData.splice(idx, 1);
-  updateBadges();
-  renderAll();
-  showToast('Report removed.');
-  document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+  updateBadges(); renderAll(); showToast('Report removed.');
 }
 
-// ── TOAST ──
+/* TOAST */
+var toastTimer;
 function showToast(msg) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   document.getElementById('toast-msg').textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2600);
 }
 
-// ── INIT ──
 loadData();
 </script>
 </body>
